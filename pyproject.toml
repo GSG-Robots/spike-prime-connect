@@ -3,7 +3,7 @@ name = "spike-prime-upload"
 version = "0.1.1"
 description = ""
 authors = [
-    {name = "JoJoJux",email = "80523427+J0J0HA@users.noreply.github.com"}
+    { name = "JoJoJux", email = "80523427+J0J0HA@users.noreply.github.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.13.1,<4.0"
@@ -14,13 +14,14 @@ dependencies = [
     "colorama (>=0.4.6,<0.5.0)",
     "json-fix (>=1.0.0,<2.0.0)",
     "dataclasses-json (>=0.6.7,<1.0.0)",
+    "mpy-cross (>=1.24.1.post2,<2.0.0)",
 ]
 
 [project.urls]
 repository = "https://github.com/GSG-Robots/spike-prime-upload"
 
 [project.scripts]
-spike-prime-upload = "spike_prime_upload.__main__:main"
+spike-prime-connect = "spike_prime_connect.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

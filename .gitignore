@@ -1,1 +1,5 @@
 .venv
+*.cpyd.py
+*.mpy
+*.pyc
+dist

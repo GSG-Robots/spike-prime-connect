@@ -88,6 +88,23 @@ docs = ["autodocsumm (==0.2.14)", "furo (==2024.8.6)", "sphinx (==8.1.3)", "sphi
 tests = ["pytest", "simplejson"]
 
 [[package]]
+name = "mpy-cross"
+version = "1.24.1.post2"
+description = "micropython mpy-cross distribution"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-macosx_11_0_universal2.whl", hash = "sha256:a76cf31a844e0f80a78947fbdf2c34e851b157afc002f9640573791a55bb8746"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:477cedb855bce1d7e15ec36fa455dce4c5622d3f5a6a3510d0b2ca67403dae0f"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:85f6638b25f704b8076537046e15126f98903034f4a9c3b9d15315b460032ef8"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-manylinux2014_aarch64.whl", hash = "sha256:cdca65612bc5e3e14930620c782ffae931b746c38660fcffd15e8025ce77c281"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-manylinux2014_armv7l.whl", hash = "sha256:3ba4de919efa0c4e94377d2a1dc3b87d8e4822318a17772a0c7e5f030a0061e1"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-win32.whl", hash = "sha256:74e656aad69adf94cdfe718e59443724edfd57049c59e3eda7b3e6e44375d9c9"},
+    {file = "mpy_cross-1.24.1.post2-py2.py3-none-win_amd64.whl", hash = "sha256:44b7329185ead4e823c851877724d8636a813435688e3e0f290055e4b6542cfc"},
+]
+
+[[package]]
 name = "mypy-extensions"
 version = "1.0.0"
 description = "Type system extensions for programs checked with the mypy type checker."
