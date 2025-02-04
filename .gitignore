@@ -1,1 +1,4 @@
 .venv
+*.cpyd.py
+*.mpy
+*.pyc

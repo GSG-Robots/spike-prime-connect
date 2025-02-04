@@ -1,4 +1,5 @@
 import base64
+import binascii
 from collections import deque
 import enum
 import json
@@ -166,7 +167,16 @@ class Message[T]:
             if not self.device.active:
                 raise ConnectionAbortedError("Device disconnected.")
         if self.error:
-            raise ConnectionError(self.error)
+            error = self.error
+            try:
+                error = base64.b64decode(error)
+            except:
+                pass
+            try:
+                error = json.loads(error)
+            except:
+                pass
+            raise ConnectionError(error)
         return (
             self._response_parser(self.result) if self._response_parser else self.result
         )
