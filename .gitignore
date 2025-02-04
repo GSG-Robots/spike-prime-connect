@@ -2,3 +2,4 @@
 *.cpyd.py
 *.mpy
 *.pyc
+dist
