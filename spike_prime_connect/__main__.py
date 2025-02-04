@@ -1,19 +1,22 @@
 import ast
-from argparse import ArgumentParser
+import base64
 import datetime
-from pathlib import Path
-import ast_comments as ast
+import msvcrt
 import re
+import subprocess
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
+
+import ast_comments as ast
+import colorama
+import compyner.__main__
 import compyner.engine
 import serial.tools.list_ports_windows
 import tqdm
-import subprocess
-import colorama
-import compyner.__main__
-from .spike_prime_compyne import spike_prime_compyne
-import msvcrt
+
 from . import spikeapi
+from .spike_prime_compyne import spike_prime_compyne
 
 
 def greet():
@@ -126,10 +129,17 @@ def upload(
     # Step 2: Compiling
     print(colorama.Fore.GREEN + "> Compiling..." + colorama.Fore.RESET, end="")
     proc = subprocess.run(
-        ["mpy-cross-v5", input.with_suffix(".cpyd.py").absolute()], check=False, stderr=subprocess.PIPE
+        ["mpy-cross-v5", input.with_suffix(".cpyd.py").absolute()],
+        check=False,
+        stderr=subprocess.PIPE,
     )
     if proc.returncode != 0:
-        print(colorama.Style.BRIGHT + colorama.Fore.RED + "\nFailed:" + colorama.Style.NORMAL)
+        print(
+            colorama.Style.BRIGHT
+            + colorama.Fore.RED
+            + "\nFailed:"
+            + colorama.Style.NORMAL
+        )
         print(proc.stderr.decode("utf-8") + colorama.Style.RESET_ALL)
         return
     mpy = input.with_suffix(".cpyd.mpy").absolute().read_bytes()
@@ -146,7 +156,7 @@ def upload(
     device.upload_file(
         mpy,
         slot,
-        sys.argv[1],
+        input.name,
         filename="__init__.mpy",
         callback=callback,
     )
@@ -164,7 +174,7 @@ def show_slots(device: spikeapi.Device):
     for slot_id, slot in data.slots.items():
         print(f"    {slot_id:>2}:")
         print(f"        ID          : {slot.id}")
-        print(f"        Name        : {slot.name}")
+        print(f"        Name        : {base64.b64decode(slot.name).decode("utf-8")}")
         print(f"        Project ID  : {slot.project_id}")
         print(f"        Type        : {slot.type}")
         print(f"        Size        : {slot.size} kb")
