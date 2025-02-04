@@ -1,5 +1,4 @@
 import base64
-import binascii
 from collections import deque
 import enum
 import json
