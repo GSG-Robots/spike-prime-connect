@@ -1,6 +1,5 @@
 import ast
 from argparse import ArgumentParser
-import base64
 import datetime
 from pathlib import Path
 import ast_comments as ast
@@ -125,13 +124,17 @@ def upload(
     input.with_suffix(".cpyd.py").write_text(comPYned, "utf-8")
 
     # Step 2: Compiling
-    print(colorama.Fore.GREEN + "> Compiling...", end="")
-    subprocess.run(
-        ["mpy-cross", "--bytecode", "5", input.with_suffix(".cpyd.py")], check=False
+    print(colorama.Fore.GREEN + "> Compiling..." + colorama.Fore.RESET, end="")
+    proc = subprocess.run(
+        ["mpy-cross-v5", input.with_suffix(".cpyd.py").absolute()], check=False, stderr=subprocess.PIPE
     )
-    mpy = input.with_suffix(".cpyd.mpy").read_bytes()
-    input.with_suffix(".cpyd.mpy").unlink()
-    print(" done" + colorama.Fore.RESET)
+    if proc.returncode != 0:
+        print(colorama.Style.BRIGHT + colorama.Fore.RED + "\nFailed:" + colorama.Style.NORMAL)
+        print(proc.stderr.decode("utf-8") + colorama.Style.RESET_ALL)
+        return
+    mpy = input.with_suffix(".cpyd.mpy").absolute().read_bytes()
+    input.with_suffix(".cpyd.mpy").absolute().unlink()
+    print(colorama.Fore.GREEN + " done" + colorama.Fore.RESET)
 
     # Step 3: Uploading
     print(colorama.Fore.GREEN + "> Uploading..." + colorama.Fore.RESET)

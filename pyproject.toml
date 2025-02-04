@@ -1,6 +1,6 @@
 [project]
 name = "spike-prime-connect"
-version = "0.1.1"
+version = "0.1.0"
 description = ""
 authors = [
     { name = "JoJoJux", email = "80523427+J0J0HA@users.noreply.github.com" },
@@ -14,7 +14,7 @@ dependencies = [
     "colorama (>=0.4.6,<0.5.0)",
     "json-fix (>=1.0.0,<2.0.0)",
     "dataclasses-json (>=0.6.7,<1.0.0)",
-    "mpy-cross (>=1.24.1.post2,<2.0.0)",
+    "mpy-cross-v5 (>=1.0.2,<2.0.0)",
 ]
 
 [project.urls]

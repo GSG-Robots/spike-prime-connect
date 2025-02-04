@@ -118,7 +118,7 @@ def pre_optimize(module, name):
     return PreOptimize().visit(module)
 
 def spike_prime_compyne(input_module: Path, slot: int = 0, debug_build: bool = False):
-    sys.path.append(input_module.parent)
+    sys.path.append(str(input_module.parent))
     compyner = ComPYner(
         exclude_modules=SPIKE_PRIME_MODULES,
         module_preprocessor=pre_optimize,
