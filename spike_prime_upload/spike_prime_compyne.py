@@ -1,8 +1,7 @@
 import ast_comments as ast
-import collections
 from pathlib import Path
 import sys
-from compyner.engine import ComPYner, ast_from_file, Namer
+from compyner.engine import ComPYner, ast_from_file
 
 
 SPIKE_PRIME_MODULES = [
@@ -117,71 +116,6 @@ class PreOptimize(ast.NodeTransformer):
 
 def pre_optimize(module, name):
     return PreOptimize().visit(module)
-
-
-class PastOptimizeCounter(ast.NodeVisitor):
-    def __init__(self):
-        self.counter = collections.Counter()
-
-    def visit_Constant(self, node: ast.Constant):
-        if isinstance(node.value, bool):
-            return
-        if isinstance(node.value, (str, int, float)):
-            self.counter[node.value] += 1
-
-
-class PastOptimize(ast.NodeTransformer):
-    def __init__(self, values_to_replace):
-        self.values_to_replace = values_to_replace
-        self.names = {}
-        self.namer = Namer()
-
-    # def visit_Comment(self, node: ast.Comment):
-    #     if node.inline:
-    #         return None
-
-    def visit_Constant(self, node: ast.Constant):
-        if isinstance(node.value, bool):
-            return node
-        if node.value not in self.values_to_replace:
-            return node
-        if node.value not in self.names:
-            self.names[node.value] = self.namer.get_unique_name()
-        return ast.copy_location(ast.Name(self.names[node.value]), node)
-
-    def visit_Module(self, node: ast.Module):
-        node = self.generic_visit(node)
-        definitions = (
-            []
-        )  # [ast.ImportFrom("micropython", [ast.alias("const", "_const_")])]
-        for value, name in self.names.items():
-            definitions.append(
-                ast.Assign(
-                    [ast.Name(name)],
-                    # ast.Call(
-                    #     ast.Name("_const_"),
-                    #     [
-                    ast.Constant(value),
-                    #         ],
-                    #     [],
-                    #     lineno=0,
-                    #     col_offset=0,
-                    # ),
-                    lineno=0,
-                    col_offset=0,
-                )
-            )
-        node.body = definitions + node.body
-        return node
-
-
-def past_optimize(module):
-    module = ast.parse(module)
-    counter = PastOptimizeCounter()
-    counter.visit(module)
-    values_to_replace = [value for value, count in counter.counter.items() if count > 4]
-    return ast.unparse(PastOptimize(values_to_replace).visit(module))
-
 
 def spike_prime_compyne(input_module: Path, slot: int = 0, debug_build: bool = False):
     sys.path.append(input_module.parent)

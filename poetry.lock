@@ -26,21 +26,18 @@ files = [
 
 [[package]]
 name = "compyner"
-version = "0.2.0"
+version = "0.2.4"
 description = "A small tool to bundle a python file and all its imports into a single file."
 optional = false
 python-versions = "<4.0,>=3.13.1"
 groups = ["main"]
 files = [
-    {file = "compyner-0.2.0-py3-none-any.whl", hash = "sha256:4d88a190d85ece0623a16f17bf87ebfe26dba72ff12af226536ab3c8ddd77f10"},
-    {file = "compyner-0.2.0.tar.gz", hash = "sha256:e9e9f031eaa6d4a6debc9fb8387993a4224ce5f74c577e53afdf5e325d03a940"},
+    {file = "compyner-0.2.4-py3-none-any.whl", hash = "sha256:2fb84324eb91ca6816194fd1bcace81347a1e99b5a3fe659e12706944792ed16"},
+    {file = "compyner-0.2.4.tar.gz", hash = "sha256:e0fc3e31e4f66635ca8b1c415bb0935346ef62303716a72a0c27170737806f3d"},
 ]
 
 [package.dependencies]
 ast-comments = ">=1.2.2,<2.0.0"
-
-[package.extras]
-spike-prime = ["colorama (>=0.4.6,<0.5.0)", "dataclasses-json (>=0.6.7,<1.0.0)", "json-fix (>=1.0.0,<2.0.0)", "pyserial (>=3.5,<4.0.0)", "tqdm (>=4.67.1,<5.0.0)"]
 
 [[package]]
 name = "dataclasses-json"
@@ -182,4 +179,4 @@ typing-extensions = ">=3.7.4"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.1,<4.0"
-content-hash = "9f30a6fcbcf274699eb856ae5d9ff2ea0de5bb1ead07528a340647d2001bf09a"
+content-hash = "47204dbaaa33699b442987c497f5a2d73e54b8a2651b3cb97851e177ef460002"
