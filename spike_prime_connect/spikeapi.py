@@ -209,6 +209,9 @@ class Device:
         self._current_image = None
         self._buffer = bytearray()
         self._ran_first = False
+        self._repl_prompt = False
+        self._repl_in = []
+        self._repl_out = []
         self.active = True
 
         self._tickloop_thread = threading.Thread(target=self.tickloop, daemon=True)
@@ -234,10 +237,14 @@ class Device:
         self._ser.write(b"\x0d")
         return message
 
-    def handle_message(self, rmsg: str):
+    def handle_message(self, rmsg: bytes):
         if not rmsg:
             return
         self._ran_first = True
+        if rmsg.startswith(b"\n<<< "):
+            self._repl_out.append(rmsg.decode("utf-8")[5:])
+        elif rmsg.startswith(b"\n>>> "):
+            self._repl_in.append(rmsg.decode("utf-8")[5:])
         try:
             msg = JsonMessage.from_json(rmsg.decode("utf-8"))
         except (json.JSONDecodeError, AttributeError):
@@ -285,6 +292,8 @@ class Device:
                         base64.b64decode(msg.p[3].encode("utf-8")).decode("utf-8"),
                     )
                 )
+            elif message == 3:
+                ...  # Button press button = p[0], time = p[1]. if time == 0, button down, else up.
             elif message == 4:
                 self.last_gesture = Gesture(msg.p)
             elif message == 12:
@@ -292,20 +301,19 @@ class Device:
             elif message == 14:
                 self.orientation = Orientation(msg.p)
             elif message in (0, 1, 2):
-                ...
+                ...  # print("?", msg)
             else:
-                ...
+                ...  # print("?", msg)
 
     def tick(self):
         self._buffer += self._ser.read_all()
-        # while b"\x0d" in self.buffer:
+        if self._buffer[-5:] == b"\n>>> ":
+            self._repl_prompt = True
+        else:
+            self._repl_prompt = False
         pos = self._buffer.find(b"\x0d")
-        # print(len(self._buffer), pos)
         if pos != -1:
             part = self._buffer[:pos]
-            # if len(self._buffer) > pos + 1 and self._buffer[pos + 1] == 10:
-            #     pos += 1
-            #     part += b"\x0a"
             self.handle_message(part)
             self._buffer = self._buffer[pos + 1 :]
 
@@ -326,23 +334,60 @@ class Device:
         self.ensure_connected()
         return self.send_message("scratch.display_clear")
 
+    def _wait_for_prompt(self, timeout=3):
+        start = time.time()
+        while (time.time() - start) < timeout:
+            if self._repl_prompt:
+                return
+        raise ConnectionError(
+            "failed to get to the command prompt"
+        )
+
+    def exec_in_repl(self, cmd: str):
+        self._ser.write(cmd.encode("utf-8") + b"\r\n")
+        self._repl_prompt = False
+        time.sleep(0.5)
+        self._wait_for_prompt()
+
+    def start_repl(self):
+        self.ensure_connected()
+        self._ser.write(b"\x03")
+        self._ser.write(b"\x02")
+        time.sleep(0.5)
+        self._wait_for_prompt()
+
+    def soft_reboot(self):
+        self._ser.write(b"\04")
+        time.sleep(0.5)
+        
+    def eval_in_repl(self, code: str):
+        pos = len(self._repl_out)
+        self.exec_in_repl("print('<<<', %s)" % code)
+        while not len(self._repl_out) - pos:
+            ...
+        return self._repl_out[-1]
+
     def wipe_slot(self, slot: int) -> Message[None]:
         return self.send_message("remove_project", {"slotid": slot})
 
-    def update_display(self, image, refresh=False) -> None:
-        self.ensure_connected()
-        if refresh:
-            self._current_image = None
-        for y, line in enumerate(image):
-            for x, pixel in enumerate(line):
-                if self._current_image and self._current_image[y][x] == pixel:
-                    continue
-                self.display_set_pixel(x, y, pixel).wait_for_response()
-        self._current_image = image
+    def move_slot(self, from_slot: int, to_slot: int) -> Message[None]:
+        return self.send_message(
+            "move_project", {"old_slotid": from_slot, "new_slotid": to_slot}
+        )
 
     def display_image(self, image: str) -> Message[None]:
         self.ensure_connected()
         return self.send_message("scratch.display_image", {"image": image})
+
+    def display_image_for(self, image: str, duration_ms: int) -> Message[None]:
+        self.ensure_connected()
+        return self.send_message(
+            "scratch.display_image_for", {"image": image, "duration": duration_ms}
+        )
+
+    def display_text(self, text: str | int) -> Message[None]:
+        self.ensure_connected()
+        return self.send_message("scratch.display_text", {"text": text})
 
     def upload_file(
         self,
@@ -358,7 +403,7 @@ class Device:
         now = int(time.time() * 1000)
         size = len(data)
 
-        #self.display_image("00000:00000:90909:00000:00000").wait_for_response()
+        # self.display_image("00000:00000:90909:00000:00000").wait_for_response()
         # self.update_display(get_arrow(0), refresh=True)
 
         start = self.send_message(
@@ -383,7 +428,7 @@ class Device:
         tid = start["transferid"]
         transferred = 0
 
-        #self.display_image(get_arrow(transferred, size, bs)).wait_for_response()
+        # self.display_image(get_arrow(transferred, size, bs)).wait_for_response()
 
         b = data[:bs]
         data = data[bs:]
@@ -394,7 +439,7 @@ class Device:
             ).wait_for_response()
             transferred += len(b)
             callback(transferred, size, bs)
-            #self.display_image(get_arrow(transferred, size, bs)).wait_for_response()
+            # self.display_image(get_arrow(transferred, size, bs)).wait_for_response()
             b = data[:bs]
             data = data[bs:]
         # time.sleep(0.1)
@@ -402,6 +447,10 @@ class Device:
     def run_program(self, slot: int) -> Message[None]:
         self.ensure_connected()
         return self.send_message("program_execute", {"slotid": slot})
+
+    def terminate_program(self) -> Message[None]:
+        self.ensure_connected()
+        return self.send_message("program_terminate")
 
     def get_storage_information(self) -> Message[JsonStorageInfo]:
         self.ensure_connected()

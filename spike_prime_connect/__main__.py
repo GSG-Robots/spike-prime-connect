@@ -89,28 +89,47 @@ def show_stdout(device: spikeapi.Device, error_replace_location: Path | None):
             break
 
 
-def clean_slots(device: spikeapi.Device, slots: list[int]):
+def wipe_slots(device: spikeapi.Device, slots: list[int]):
     print(colorama.Fore.GREEN + "> Wiping slots..." + colorama.Fore.RESET)
     existing_slots = device.get_storage_information().wait_for_response().slots.keys()
     for slot in slots:
         if str(slot) in existing_slots:
             device.wipe_slot(slot).wait_for_response()
 
+def move_slots(device: spikeapi.Device, from_slot:int, to_slot: int):
+    print(colorama.Fore.GREEN + "> Moving slot..." + colorama.Fore.RESET)
+    device.move_slot(from_slot, to_slot).wait_for_response()
 
-def run(
+
+def start(
     device: spikeapi.Device,
     slot: int = 0,
     file: Path | None = None,
     hide_output: bool = False,
+    wait: bool = True
 ):
     print(colorama.Fore.GREEN + "> Running..." + colorama.Fore.RESET)
     device.run_program(slot)
 
-    while not device.running_program:
-        pass
+    if wait:
+        while not device.running_program:
+            pass
 
     if not hide_output:
         show_stdout(device, file)
+
+
+def stop(
+    device: spikeapi.Device,
+    wait: bool = True
+):
+    print(colorama.Fore.GREEN + "> Terminating..." + colorama.Fore.RESET)
+    device.terminate_program()
+
+    if wait:
+        while device.running_program:
+            pass
+        
 
 
 def upload(
@@ -118,7 +137,7 @@ def upload(
     input: Path,
     slot: int = 0,
     debug: bool = False,
-    autorun: bool = True,
+    autostart: bool = True,
     hide_output: bool = False,
 ):
     # Step 1: ComPYning
@@ -163,8 +182,8 @@ def upload(
 
     progress_bar.close()
 
-    if autorun:
-        run(device, slot, input.with_suffix(".cpyd.py"), hide_output)
+    if autostart:
+        start(device, slot, input.with_suffix(".cpyd.py"), hide_output)
 
 
 def show_slots(device: spikeapi.Device):
@@ -186,6 +205,7 @@ def show_slots(device: spikeapi.Device):
         )
     if not data.slots:
         print("    No slots.")
+    print()
 
 
 def show_storage(device: spikeapi.Device):
@@ -196,6 +216,7 @@ def show_storage(device: spikeapi.Device):
     print(f"    Free      : {data.storage.free:>8} {data.storage.unit}")
     print(f"    Total     : {data.storage.total:>8} {data.storage.unit}")
     print(f"    Used      : {data.storage.pct:>8} %")
+    print()
 
 
 def show_firmware(device: spikeapi.Device):
@@ -208,12 +229,31 @@ def show_firmware(device: spikeapi.Device):
     print(f"    Capabilities     : {", ".join(data.capabilities)}")
     print(f"    Variant          : {data.variant}")
     print(f"    USB PID          : {data.usb_pid}")
+    print()
 
 
 def show_uuid(device: spikeapi.Device):
     print(colorama.Fore.GREEN + "> Loading data..." + colorama.Fore.RESET)
     data = device.get_firmware_info().wait_for_response()
     print(f"Device UUID: {data.device_uuid}")
+    
+def show_battery(device: spikeapi.Device):
+    print(colorama.Fore.GREEN + "> Loading data..." + colorama.Fore.RESET)
+    device.start_repl()
+    device.exec_in_repl("import hub")
+    charger_detect = device.eval_in_repl("hub.battery.charger_detect()")
+    voltage = device.eval_in_repl("hub.battery.voltage()")
+    current = device.eval_in_repl("hub.battery.current()")
+    capacity_left = device.eval_in_repl("hub.battery.capacity_left()")
+    temperature = device.eval_in_repl("hub.battery.temperature()")
+    print("Battery:")
+    print(f"    Capacity Left : {capacity_left} %")
+    print(f"    Charging      : {charger_detect}")
+    print(f"    Voltage       : {voltage} mV")
+    print(f"    Current       : {current} ?")
+    print(f"    Temperature   : {temperature} °C")
+    print()
+    device.soft_reboot()
 
 
 def main() -> None:
@@ -234,7 +274,7 @@ def main() -> None:
         default=0,
     )
     upload_parser.add_argument("--debug", action="store_true")
-    upload_parser.add_argument("--run", action="store_true")
+    upload_parser.add_argument("--start", action="store_true")
     upload_parser.add_argument(
         "--read",
         action="store_true",
@@ -249,14 +289,14 @@ def main() -> None:
         default=None,
         help="path to a compyned file. Will be used to replace error locations",
     )
-    run_parser = subparsers.add_parser("run")
-    run_parser.add_argument("slot", action="store", type=int)
-    run_parser.add_argument(
+    start_parser = subparsers.add_parser("start")
+    start_parser.add_argument("slot", action="store", type=int)
+    start_parser.add_argument(
         "--read",
         action="store_true",
         help="dont show program output",
     )
-    run_parser.add_argument(
+    start_parser.add_argument(
         "--file",
         action="store",
         type=compyner.__main__.file_path_exists,
@@ -264,16 +304,36 @@ def main() -> None:
         default=None,
         help="path to a compyned file. Will be used to replace error locations",
     )
-    clean_parser = subparsers.add_parser("clean")
-    opt_group = clean_parser.add_mutually_exclusive_group(required=True)
+    start_parser.add_argument(
+        "--wait",
+        action="store_true",
+        help="wait until program is started",
+    )
+    stop_parser = subparsers.add_parser("stop")
+    stop_parser.add_argument(
+        "--wait",
+        action="store_true",
+        help="wait until program is stopped",
+    )
+    subparsers.add_parser("poweroff")
+    reboot_parser = subparsers.add_parser("reboot")
+    reboot_parser.add_argument(
+        "--hard",
+        action="store_true",
+        help="fully reboot",
+    )
+    wipe_parser = subparsers.add_parser("wipe")
+    opt_group = wipe_parser.add_mutually_exclusive_group(required=True)
     opt_group.add_argument("slot", action="store", nargs="*", type=int)
     opt_group.add_argument("--all", action="store_true")
+    move_parser = subparsers.add_parser("move")
+    move_parser.add_argument("from_slot", action="store", type=int)
+    move_parser.add_argument("to_slot", action="store", type=int)
     get_parser = subparsers.add_parser("get")
-    get_parser.add_argument("detail", choices=["storage", "slots", "firmware", "uuid"])
+    get_parser.add_argument("detail", choices=["storage", "slots", "firmware", "uuid", "battery"])
     args = parser.parse_args()
 
     try:
-
         if args.action == "upload":
             device = get_device()
             upload(
@@ -281,18 +341,24 @@ def main() -> None:
                 args.input,
                 args.slot,
                 args.debug,
-                args.run,
+                args.start,
                 not args.read,
             )
-        elif args.action == "run":
+        elif args.action == "start":
             device = get_device()
-            run(device, args.slot, args.file, not args.read)
+            start(device, args.slot, args.file, not args.read, args.wait)
+        elif args.action == "stop":
+            device = get_device()
+            stop(device, args.wait)
         elif args.action == "read":
             device = get_device()
             show_stdout(device, args.file)
-        elif args.action == "clean":
+        elif args.action == "wipe":
             device = get_device()
-            clean_slots(device, range(16) if args.all else args.slot)
+            wipe_slots(device, range(16) if args.all else args.slot)
+        elif args.action == "move":
+            device = get_device()
+            move_slots(device, args.from_slot, args.to_slot)
         elif args.action == "get":
             device = get_device()
             if args.detail == "storage":
@@ -301,8 +367,24 @@ def main() -> None:
                 show_slots(device)
             elif args.detail == "uuid":
                 show_uuid(device)
+            elif args.detail == "battery":
+                show_battery(device)
             else:
                 show_firmware(device)
+        elif args.action == "poweroff":
+            device = get_device()
+            device.start_repl()
+            device.exec_in_repl("import hub")
+            device.exec_in_repl("hub.power_off(fast=True)")
+        elif args.action == "reboot":
+            device = get_device()
+            if args.hard:
+                device.start_repl()
+                device.exec_in_repl("import hub")
+                device.exec_in_repl("hub.power_off(restart=True)")
+            else:
+                device.start_repl()
+                device.soft_reboot()
         else:
             parser.error("Invalid action")
     except ConnectionError as e:
