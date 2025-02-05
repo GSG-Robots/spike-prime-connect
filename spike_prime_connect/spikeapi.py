@@ -210,6 +210,7 @@ class Device:
         self._buffer = bytearray()
         self._ran_first = False
         self._repl_prompt = False
+        self._repl_paste = False
         self._repl_in = []
         self._repl_out = []
         self.active = True
@@ -243,7 +244,7 @@ class Device:
         self._ran_first = True
         if rmsg.startswith(b"\n<<< "):
             self._repl_out.append(rmsg.decode("utf-8")[5:])
-        elif rmsg.startswith(b"\n>>> "):
+        elif rmsg.startswith(b"\n>>> ") or rmsg.startswith(b"\n=== "):
             self._repl_in.append(rmsg.decode("utf-8")[5:])
         try:
             msg = JsonMessage.from_json(rmsg.decode("utf-8"))
@@ -307,10 +308,15 @@ class Device:
 
     def tick(self):
         self._buffer += self._ser.read_all()
-        if self._buffer[-5:] == b"\n>>> ":
+        if self._buffer[-7:].strip(b"\r\n") == b">>> ":
             self._repl_prompt = True
+            self._repl_paste = False
+        elif self._buffer[-7:].strip(b"\r\n") == b"=== ":
+            self._repl_prompt = True
+            self._repl_paste = True
         else:
             self._repl_prompt = False
+            self._repl_paste = False
         pos = self._buffer.find(b"\x0d")
         if pos != -1:
             part = self._buffer[:pos]
@@ -338,26 +344,29 @@ class Device:
         start = time.time()
         while (time.time() - start) < timeout:
             if self._repl_prompt:
-                return
-        raise ConnectionError(
-            "failed to get to the command prompt"
-        )
+                return True
+        return False
 
     def exec_in_repl(self, cmd: str):
         self._ser.write(cmd.encode("utf-8") + b"\r\n")
         self._repl_prompt = False
         time.sleep(0.5)
-        self._wait_for_prompt()
+        if not self._wait_for_prompt():
+            raise TimeoutError("hub takes too long to respond")
 
     def start_repl(self):
         self.ensure_connected()
-        self._ser.write(b"\x03")
-        self._ser.write(b"\x02")
-        time.sleep(0.5)
-        self._wait_for_prompt()
+        for _ in range(3):
+            self._ser.write(b"\x03")
+            self._ser.write(b"\x02")
+            time.sleep(0.5)
+            if self._wait_for_prompt():
+                return
+            time.sleep(2)
+        raise TimeoutError("hub takes too long to respond")
 
     def soft_reboot(self):
-        self._ser.write(b"\04")
+        self._ser.write(b"\x04")
         time.sleep(0.5)
         
     def eval_in_repl(self, code: str):

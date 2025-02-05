@@ -253,8 +253,28 @@ def show_battery(device: spikeapi.Device):
     print(f"    Current       : {current} ?")
     print(f"    Temperature   : {temperature} °C")
     print()
+    print(colorama.Fore.YELLOW + ">> Performing soft reboot." + colorama.Fore.RESET)
     device.soft_reboot()
 
+def show_repl(device: spikeapi.Device):
+    device.start_repl()
+    device.logs.clear()
+    print(colorama.Fore.LIGHTBLUE_EX + ">> Press ^E to enter paste mode; enter ':exit' to exit" + colorama.Fore.RESET)
+    try:
+        while True:
+            cmd = input(colorama.Fore.LIGHTBLACK_EX + (">>> " if not device._repl_paste else "=== ") + colorama.Fore.WHITE)
+            if cmd == ":exit":
+                return
+            device.exec_in_repl(cmd)
+            while device.logs:
+                entry = device.logs.popleft().entry[1:]
+                if entry.startswith(">>>") or entry.startswith("==="):
+                    continue
+                print(colorama.Fore.WHITE + entry + colorama.Fore.RESET)
+    finally:
+        print()
+        print(colorama.Fore.YELLOW + ">> Performing soft reboot." + colorama.Fore.RESET)
+        device.soft_reboot()
 
 def main() -> None:
     parser = ArgumentParser()
@@ -322,6 +342,7 @@ def main() -> None:
         action="store_true",
         help="fully reboot",
     )
+    subparsers.add_parser("repl")
     wipe_parser = subparsers.add_parser("wipe")
     opt_group = wipe_parser.add_mutually_exclusive_group(required=True)
     opt_group.add_argument("slot", action="store", nargs="*", type=int)
@@ -378,13 +399,15 @@ def main() -> None:
             device.exec_in_repl("hub.power_off(fast=True)")
         elif args.action == "reboot":
             device = get_device()
+            device.start_repl()
             if args.hard:
-                device.start_repl()
                 device.exec_in_repl("import hub")
                 device.exec_in_repl("hub.power_off(restart=True)")
             else:
-                device.start_repl()
                 device.soft_reboot()
+        elif args.action == "repl":
+            device = get_device()
+            show_repl(device)
         else:
             parser.error("Invalid action")
     except ConnectionError as e:
