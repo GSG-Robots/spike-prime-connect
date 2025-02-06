@@ -131,6 +131,6 @@ def spike_prime_compyne(input_module: Path, slot: int = 0, debug_build: bool = F
         "__main__",
         ast_from_file(input_module),
         origin=input_module.absolute(),
-    )
+    ) + "\n\nraise SystemExit\n\n"
     sys.path.pop()
     return code

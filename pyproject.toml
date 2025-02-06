@@ -1,6 +1,6 @@
 [project]
 name = "spike-prime-connect"
-version = "0.1.3"
+version = "0.1.4"
 description = ""
 authors = [
     { name = "JoJoJux", email = "80523427+J0J0HA@users.noreply.github.com" },
