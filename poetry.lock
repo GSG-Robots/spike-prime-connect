@@ -26,14 +26,14 @@ files = [
 
 [[package]]
 name = "compyner"
-version = "0.2.4"
+version = "0.3.0"
 description = "A small tool to bundle a python file and all its imports into a single file."
 optional = false
 python-versions = "<4.0,>=3.13.1"
 groups = ["main"]
 files = [
-    {file = "compyner-0.2.4-py3-none-any.whl", hash = "sha256:2fb84324eb91ca6816194fd1bcace81347a1e99b5a3fe659e12706944792ed16"},
-    {file = "compyner-0.2.4.tar.gz", hash = "sha256:e0fc3e31e4f66635ca8b1c415bb0935346ef62303716a72a0c27170737806f3d"},
+    {file = "compyner-0.3.0-py3-none-any.whl", hash = "sha256:f4730022742e30b1d9acb5cf9c81196dcf451a6100b57d0e0b5a34417d93e21e"},
+    {file = "compyner-0.3.0.tar.gz", hash = "sha256:d068f8101d6c00ba4d3ed710069c8e3dddae96fdb207c340661aab184de4fece"},
 ]
 
 [package.dependencies]
@@ -199,4 +199,4 @@ typing-extensions = ">=3.7.4"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13.1,<4.0"
-content-hash = "96296f41807d17e7ff6a6ce634ae0076e428cce3ced869e2bd2edfad4a157589"
+content-hash = "7952f16617307eac0b83b129dd54d01522bf1c89acf71cfa67e9c4de95a1658d"

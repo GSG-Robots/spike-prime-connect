@@ -1,8 +1,8 @@
-import ast_comments as ast
-from pathlib import Path
 import sys
-from compyner.engine import ComPYner, ast_from_file
+from pathlib import Path
 
+import ast_comments as ast
+from compyner.engine import ComPYner, ast_from_file
 
 SPIKE_PRIME_MODULES = [
     "array",
@@ -117,6 +117,7 @@ class PreOptimize(ast.NodeTransformer):
 def pre_optimize(module, name):
     return PreOptimize().visit(module)
 
+
 def spike_prime_compyne(input_module: Path, slot: int = 0, debug_build: bool = False):
     sys.path.append(str(input_module.parent))
     compyner = ComPYner(
@@ -127,10 +128,14 @@ def spike_prime_compyne(input_module: Path, slot: int = 0, debug_build: bool = F
         random_name_length=0 if debug_build else 4,
         keep_names=debug_build,
     )
-    code = f"# LEGO type:standard slot:{slot} autostart\n" + compyner.compyne_from_ast(
-        "__main__",
-        ast_from_file(input_module),
-        origin=input_module.absolute(),
-    ) + "\n\nraise SystemExit\n\n"
+    code = (
+        f"# LEGO type:standard slot:{slot} autostart\n"
+        + compyner.compyne_from_ast(
+            "__main__",
+            ast_from_file(input_module),
+            origin=input_module.absolute(),
+        )
+        + "\n\nraise SystemExit\n\n"
+    )
     sys.path.pop()
     return code

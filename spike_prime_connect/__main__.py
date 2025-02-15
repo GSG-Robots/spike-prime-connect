@@ -96,7 +96,8 @@ def wipe_slots(device: spikeapi.Device, slots: list[int]):
         if str(slot) in existing_slots:
             device.wipe_slot(slot).wait_for_response()
 
-def move_slots(device: spikeapi.Device, from_slot:int, to_slot: int):
+
+def move_slots(device: spikeapi.Device, from_slot: int, to_slot: int):
     print(colorama.Fore.GREEN + "> Moving slot..." + colorama.Fore.RESET)
     device.move_slot(from_slot, to_slot).wait_for_response()
 
@@ -106,7 +107,7 @@ def start(
     slot: int = 0,
     file: Path | None = None,
     hide_output: bool = False,
-    wait: bool = True
+    wait: bool = True,
 ):
     print(colorama.Fore.GREEN + "> Running..." + colorama.Fore.RESET)
     device.run_program(slot)
@@ -119,17 +120,13 @@ def start(
         show_stdout(device, file)
 
 
-def stop(
-    device: spikeapi.Device,
-    wait: bool = True
-):
+def stop(device: spikeapi.Device, wait: bool = True):
     print(colorama.Fore.GREEN + "> Terminating..." + colorama.Fore.RESET)
     device.terminate_program()
 
     if wait:
         while device.running_program:
             pass
-        
 
 
 def upload(
@@ -236,7 +233,8 @@ def show_uuid(device: spikeapi.Device):
     print(colorama.Fore.GREEN + "> Loading data..." + colorama.Fore.RESET)
     data = device.get_firmware_info().wait_for_response()
     print(f"Device UUID: {data.device_uuid}")
-    
+
+
 def show_battery(device: spikeapi.Device):
     print(colorama.Fore.GREEN + "> Loading data..." + colorama.Fore.RESET)
     device.start_repl()
@@ -256,13 +254,22 @@ def show_battery(device: spikeapi.Device):
     print(colorama.Fore.YELLOW + ">> Performing soft reboot." + colorama.Fore.RESET)
     device.soft_reboot()
 
+
 def show_repl(device: spikeapi.Device):
     device.start_repl()
     device.logs.clear()
-    print(colorama.Fore.LIGHTBLUE_EX + ">> Press ^E to enter paste mode; enter ':exit' to exit" + colorama.Fore.RESET)
+    print(
+        colorama.Fore.LIGHTBLUE_EX
+        + ">> Press ^E to enter paste mode; enter ':exit' to exit"
+        + colorama.Fore.RESET
+    )
     try:
         while True:
-            cmd = input(colorama.Fore.LIGHTBLACK_EX + (">>> " if not device._repl_paste else "=== ") + colorama.Fore.WHITE)
+            cmd = input(
+                colorama.Fore.LIGHTBLACK_EX
+                + (">>> " if not device._repl_paste else "=== ")
+                + colorama.Fore.WHITE
+            )
             if cmd == ":exit":
                 return
             device.exec_in_repl(cmd)
@@ -275,6 +282,7 @@ def show_repl(device: spikeapi.Device):
         print()
         print(colorama.Fore.YELLOW + ">> Performing soft reboot." + colorama.Fore.RESET)
         device.soft_reboot()
+
 
 def main() -> None:
     parser = ArgumentParser()
@@ -351,7 +359,10 @@ def main() -> None:
     move_parser.add_argument("from_slot", action="store", type=int)
     move_parser.add_argument("to_slot", action="store", type=int)
     get_parser = subparsers.add_parser("get")
-    get_parser.add_argument("detail", choices=["storage", "slots", "firmware", "uuid", "battery"])
+    get_parser.add_argument(
+        "detail", choices=["storage", "slots", "firmware", "uuid", "battery"]
+    )
+
     args = parser.parse_args()
 
     try:

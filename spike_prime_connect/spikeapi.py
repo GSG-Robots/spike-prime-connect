@@ -1,5 +1,4 @@
 import base64
-from collections import deque
 import enum
 import json
 import math
@@ -7,11 +6,13 @@ import random
 import string
 import threading
 import time
+from collections import deque
+from dataclasses import dataclass
 from typing import Any, Literal, Optional
+
 import serial
 import serial.serialutil
 import serial.tools.list_ports_windows as serial_tool_search
-from dataclasses import dataclass
 from dataclasses_json import DataClassJsonMixin
 
 letters = string.ascii_letters + string.digits + "_"
@@ -368,7 +369,7 @@ class Device:
     def soft_reboot(self):
         self._ser.write(b"\x04")
         time.sleep(0.5)
-        
+
     def eval_in_repl(self, code: str):
         pos = len(self._repl_out)
         self.exec_in_repl("print('<<<', %s)" % code)
