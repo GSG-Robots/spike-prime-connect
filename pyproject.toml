@@ -16,6 +16,7 @@ dependencies = [
     "dataclasses-json (>=0.6.7,<1.0.0)",
     "mpy-cross-v5 (>=1.0.2,<2.0.0)",
 ]
+license = "GPL-3.0"
 
 [project.urls]
 repository = "https://github.com/GSG-Robots/spike-prime-upload"
