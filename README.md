@@ -1,5 +1,7 @@
 # `spike-prime-connect`
 
+[![PyPI daily downloads](https://img.shields.io/pypi/dd/spike-prime-connect)](https://pypi.org/project/spike-prime-connect/) [![PyPI current version](https://img.shields.io/pypi/v/spike-prime-connect)](https://pypi.org/project/spike-prime-connect/)
+
 This is a CLI tool that allows you to connect and communicate to your Spike Prime or Robot Inventor hub.
 
 Some actions you can perform are:
@@ -38,6 +40,8 @@ Some actions you can perform are:
   spike-prime-connect reboot --hard
   spike-prime-connect poweroff
   ```
+
+Thanks to [sanjayseshan/spikeprime-tools](https://github.com/sanjayseshan/spikeprime-tools) for providing a base to build this project on.
 
 > [!WARNING]
 > You are using this program at your own risk, we don not provide warranty!  
